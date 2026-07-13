@@ -1,0 +1,71 @@
+body {
+    font-family: system-ui, sans-serif;
+    max-width: 40rem;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    color: #222;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+nav a {
+    margin-left: 0.75rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 20rem;
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+}
+
+button {
+    align-self: flex-start;
+    padding: 0.4rem 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: left;
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+td .inline-form {
+    display: inline;
+    margin-left: 0.5rem;
+}
+
+td .inline-form button {
+    padding: 0.1rem 0.5rem;
+}
+
+.status-pending { color: #a06a00; }
+.status-approved { color: #1a7a1a; }
+.status-denied { color: #b00020; }
+
+.flashes {
+    list-style: none;
+    padding: 0.5rem 0.75rem;
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    border-radius: 4px;
+}

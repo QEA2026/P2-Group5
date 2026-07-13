@@ -1,0 +1,38 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+myvenv/
+ENV/
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Maven build output
+target/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local environment and databases
+.env
+.env.*
+*.sqlite3
+*.db
+*.log
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

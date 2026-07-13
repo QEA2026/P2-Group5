@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section>
+    <h2>Submit an expense</h2>
+    <form method="post" action="{{ url_for('submit_expense') }}">
+        <label>
+            Amount
+            <input type="number" name="amount" step="0.01" min="0.01" required>
+        </label>
+        <label>
+            Description
+            <input type="text" name="description" required>
+        </label>
+        <label>
+            Date
+            <input type="date" name="date" value="{{ today }}" required>
+        </label>
+        <button type="submit">Submit</button>
+    </form>
+</section>
+
+<section>
+    <h2>Your expenses</h2>
+    {% if expenses %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Comment</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in expenses %}
+            <tr>
+                <td>{{ item.expense.date }}</td>
+                <td>{{ item.expense.description }}</td>
+                <td>${{ "%.2f"|format(item.expense.amount) }}</td>
+                <td class="status status-{{ item.status }}">{{ item.status }}</td>
+                <td>{{ item.comment or "" }}</td>
+                <td>
+                    {% if item.status == "pending" %}
+                    <a href="{{ url_for('edit_expense', expense_id=item.expense.expense_id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('delete_expense', expense_id=item.expense.expense_id) }}"
+                          onsubmit="return confirm('Delete this expense?');" class="inline-form">
+                        <button type="submit">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No expenses submitted yet.</p>
+    {% endif %}
+</section>
+{% endblock %}
