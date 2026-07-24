@@ -10,9 +10,24 @@ import com.revature.utils.ConnectionUtil;
 
 public class AuthDAO {
 
-    // login using username and password 
+    private final Connection injectedConnection;
+
+    public AuthDAO() {
+        this.injectedConnection = null;
+    }
+
+    // Allows tests to inject a mock Connection instead of hitting the real database.
+    public AuthDAO(Connection injectedConnection) {
+        this.injectedConnection = injectedConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return injectedConnection != null ? injectedConnection : ConnectionUtil.getConnection();
+    }
+
+    // login using username and password
     public User login(String username, String password){
-        try( Connection conn = ConnectionUtil.getConnection()){
+        try( Connection conn = getConnection()){
             String sql = "select * from users where username = ? and password = ?;";
 
             PreparedStatement ps =conn.prepareStatement(sql);

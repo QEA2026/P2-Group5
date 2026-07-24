@@ -11,11 +11,27 @@ import com.revature.models.User;
 import com.revature.utils.ConnectionUtil;
 
 public class UserDAO implements UserDAOInterface{
+
+    private final Connection injectedConnection;
+
+    public UserDAO() {
+        this.injectedConnection = null;
+    }
+
+    // Allows tests to inject a mock Connection instead of hitting the real database.
+    public UserDAO(Connection injectedConnection) {
+        this.injectedConnection = injectedConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return injectedConnection != null ? injectedConnection : ConnectionUtil.getConnection();
+    }
+
     @Override
     public ArrayList<User> getManagers()
     {
         //instantiate a Connection object so that we can talk to the DB.
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             //A string that will represent our SQL statement
             String sql = "select * from users where role = 'manager';";
@@ -50,7 +66,7 @@ public class UserDAO implements UserDAOInterface{
     @Override
     public User insertUser(User emp) {
         //instantiate a Connection object so that we can talk to the DB.
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             String sql = "insert into users (username, password, role) values (?,?,?);";
 
@@ -70,18 +86,19 @@ public class UserDAO implements UserDAOInterface{
     }
 
     @Override
-    public User deleteUser(User emp)
+    public boolean deleteUser(User emp)
     {
-        try (Connection conn = ConnectionUtil.getConnection()){
+        try (Connection conn = getConnection()){
             
             String sql = "delete from users where user_id = ?;";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, emp.getUser_id());
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
+            
         } catch (SQLException e){
             e.printStackTrace();
         }
         
-        return null;
+        return false;
     }
 }

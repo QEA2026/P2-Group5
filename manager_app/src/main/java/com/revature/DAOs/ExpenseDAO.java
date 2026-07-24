@@ -12,11 +12,26 @@ import com.revature.utils.ConnectionUtil;
 
 public class ExpenseDAO implements ExpenseDAOInterface{
 
+    private final Connection injectedConnection;
+
+    public ExpenseDAO() {
+        this.injectedConnection = null;
+    }
+
+    // Allows tests to inject a mock Connection instead of hitting the real database.
+    public ExpenseDAO(Connection injectedConnection) {
+        this.injectedConnection = injectedConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return injectedConnection != null ? injectedConnection : ConnectionUtil.getConnection();
+    }
+
     // get expenses
     @Override
     public ArrayList<Expense> getExpenses() 
     {
-        try (Connection conn = ConnectionUtil.getConnection()) {
+        try (Connection conn = getConnection()) {
 
             String sql = "select * from expenses;";
             Statement s = conn.createStatement();
@@ -55,7 +70,7 @@ public class ExpenseDAO implements ExpenseDAOInterface{
     @Override
     public ArrayList<Expense> getExpensesByEmployee(String username)
     {
-        try (Connection conn = ConnectionUtil.getConnection()) {
+        try (Connection conn = getConnection()) {
 
             String sql = "select * from expenses where user_id = (select user_id from users where username = ?);";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -96,7 +111,7 @@ public class ExpenseDAO implements ExpenseDAOInterface{
     @Override
     public ArrayList<Expense> getExpensesByStatus(String status)
     {
-        try (Connection conn = ConnectionUtil.getConnection()) {
+        try (Connection conn = getConnection()) {
 
             String sql = "select * from expenses where expense_id in (select expense_id from approvals where status = ?);";
             
@@ -141,7 +156,7 @@ public class ExpenseDAO implements ExpenseDAOInterface{
     @Override
     public ArrayList<Expense> getExpensesByDate(String start_date, String end_date)
     {
-        try (Connection conn = ConnectionUtil.getConnection()) {
+        try (Connection conn = getConnection()) {
 
             String sql = "select * from expenses where date between ? and ?;";
             
@@ -184,7 +199,7 @@ public class ExpenseDAO implements ExpenseDAOInterface{
     @Override
     public ArrayList<Expense> getExpensesByCategory(String category)
     {
-        try (Connection conn = ConnectionUtil.getConnection()) {
+        try (Connection conn = getConnection()) {
 
             String sql = "select * from expenses where exp_description like ?;";
             
@@ -225,7 +240,7 @@ public class ExpenseDAO implements ExpenseDAOInterface{
     @Override
     public Expense getExpenseByID(int id)
     {
-        try (Connection conn = ConnectionUtil.getConnection()) {
+        try (Connection conn = getConnection()) {
 
             String sql = "select * from expenses where expense_id = ?;";
             

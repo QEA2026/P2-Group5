@@ -20,7 +20,7 @@ public interface UserDAOInterface {
     //just so the User can see what they've inserted. Think of it as a confirmation
 
     //TODO: delete a manager
-    User deleteUser(User emp);
+    boolean deleteUser(User emp);
 
     
 }

@@ -12,12 +12,27 @@ import com.revature.utils.ConnectionUtil;
 
 public class ApprovalDAO implements ApprovalDAOInterface{
 
-    // Get all approvals 
+    private final Connection injectedConnection;
+
+    public ApprovalDAO() {
+        this.injectedConnection = null;
+    }
+
+    // Allows tests to inject a mock Connection instead of hitting the real database.
+    public ApprovalDAO(Connection injectedConnection) {
+        this.injectedConnection = injectedConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return injectedConnection != null ? injectedConnection : ConnectionUtil.getConnection();
+    }
+
+    // Get all approvals
     @Override
     public ArrayList<Approval> getApprovals()
     {
         //instantiate a Connection object so that we can talk to the DB.
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             //A string that will represent our SQL statement
             String sql = "select * from approvals;";
@@ -69,7 +84,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     @Override
     public ArrayList<Approval> getApprovalsByManager(String username) {
         //instantiate a Connection object so that we can talk to the DB.
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             //A string that will represent our SQL statement
             String sql = "select * from approvals where reviewer = (select user_id from users where username = ?);";
@@ -123,7 +138,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     @Override
     public ArrayList<Approval> getApprovalsByEmployee(String username) {
         //instantiate a Connection object so that we can talk to the DB.
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             //A string that will represent our SQL statement
             String sql = "select * from approvals where expense_id IN (select expense_id from expenses where user_id = (select user_id from users where username = ?));";
@@ -176,7 +191,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     @Override
     public ArrayList<Approval> getApprovalsByStatus(String status)
     {
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             //A string that will represent our SQL statement
             String sql = "select * from approvals where status = ?;";
@@ -229,7 +244,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     @Override
     public ArrayList<Approval> getApprovalsByDate(String date)
     {
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             //A string that will represent our SQL statement
             String sql = "select * from approvals where review_date = ?;";
@@ -284,7 +299,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     public Approval insertApproval(Approval approval)
     {
         
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             String sql = "insert into approvals (expense_id, status, reviewer, comment, review_date) values (?, ?, ?, ?, ?);";
 
@@ -313,7 +328,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     @Override
     public Approval updateApproval(Approval approval)
     {
-        try(Connection conn = ConnectionUtil.getConnection()){
+        try(Connection conn = getConnection()){
 
             String sql = "update approvals set status = ?, reviewer = ?, comment = ?, review_date = ? where approval_id = ?;";
 
@@ -341,7 +356,7 @@ public class ApprovalDAO implements ApprovalDAOInterface{
     @Override
     public Approval getApprovalByID(int id)
     {
-         try (Connection conn = ConnectionUtil.getConnection()) {
+         try (Connection conn = getConnection()) {
 
             String sql = "select * from approvals where approval_id = ?;";
             
