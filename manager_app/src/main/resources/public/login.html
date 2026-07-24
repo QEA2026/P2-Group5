@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager Login</title>
+    <link rel="stylesheet" href="/manager.css">
+</head>
+<body class="manager-login-page" data-page="login">
+    <main class="login-shell">
+        <section class="login-intro">
+            <h1>Manager workspace</h1>
+            <p class="lead">
+                Review requests, track approval history, and keep reimbursements moving
+                without jumping between scattered screens.
+            </p>
+            <div class="intro-note">
+                <p>Built for the Phase 2 manager web app</p>
+                <p>Java backend, approval queue, reporting view</p>
+            </div>
+        </section>
+
+        <section class="login-panel">
+            <div class="panel-copy">
+                <p class="eyebrow">Manager sign in</p>
+                <h2>Open the approval desk</h2>
+                <p>Use a manager account to review pending expenses and update decisions.</p>
+            </div>
+
+            <form id="login-form" class="form-stack">
+                <label>
+                    Username
+                    <input id="username" name="username" type="text" placeholder="manager_diana" required>
+                </label>
+                <label>
+                    Password
+                    <input id="password" name="password" type="password" placeholder="manager123" required>
+                </label>
+                <button type="submit" class="button-primary">Sign in</button>
+                <p id="login-message" class="inline-message" aria-live="polite"></p>
+            </form>
+        </section>
+    </main>
+
+    <script src="/manager.js" defer></script>
+</body>
+</html>
