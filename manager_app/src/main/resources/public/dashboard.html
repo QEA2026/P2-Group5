@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager Dashboard</title>
+    <link rel="stylesheet" href="/manager.css">
+</head>
+<body class="manager-dashboard-page" data-page="dashboard">
+    <header class="topbar">
+        <div class="brand-lockup">
+            <p class="eyebrow">Revature Expense Manager</p>
+            <h1>Manager dashboard</h1>
+        </div>
+
+        <div class="topbar-actions">
+            <div class="session-copy">
+                <span class="session-label">Signed in as</span>
+                <strong id="manager-name">Manager</strong>
+            </div>
+            <button id="logout-button" class="button-secondary" type="button">Log out</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <section class="hero-strip">
+            <div>
+                <p class="eyebrow">Approval workspace</p>
+                <h2>Review requests with less noise</h2>
+                <p class="hero-copy">
+                    Filter pending work, inspect expense details, and update approvals from one
+                    clean manager screen.
+                </p>
+            </div>
+
+            <dl class="summary-rail">
+                <div>
+                    <dt>Total</dt>
+                    <dd id="summary-total">0</dd>
+                </div>
+                <div>
+                    <dt>Pending</dt>
+                    <dd id="summary-pending">0</dd>
+                </div>
+                <div>
+                    <dt>Approved</dt>
+                    <dd id="summary-approved">0</dd>
+                </div>
+                <div>
+                    <dt>Denied</dt>
+                    <dd id="summary-denied">0</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="surface">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Live queue</p>
+                    <h3>Approval center</h3>
+                </div>
+                <button id="refresh-approvals" class="button-secondary" type="button">Refresh</button>
+            </div>
+
+            <form id="approval-filters" class="toolbar-grid">
+                <label>
+                    Status
+                    <select name="status" id="approval-status">
+                        <option value="">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="denied">Denied</option>
+                    </select>
+                </label>
+
+                <label>
+                    Employee
+                    <select name="employee" id="approval-employee">
+                        <option value="">All employees</option>
+                    </select>
+                </label>
+
+                <label>
+                    Reviewer
+                    <select name="reviewer" id="approval-reviewer">
+                        <option value="">All reviewers</option>
+                    </select>
+                </label>
+
+                <label class="toolbar-search">
+                    Search
+                    <input type="search" name="keyword" id="approval-keyword" placeholder="Description or employee">
+                </label>
+            </form>
+
+            <div class="split-layout">
+                <div class="table-panel">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approval-table-body"></tbody>
+                        </table>
+                    </div>
+                    <p id="approval-empty" class="empty-state" hidden>No approvals match these filters.</p>
+                </div>
+
+                <aside class="review-panel">
+                    <div id="review-empty" class="review-empty">
+                        <p class="eyebrow">Selected request</p>
+                        <h3>Review details</h3>
+                        <p>Choose a row from the approval table to update the decision here.</p>
+                    </div>
+
+                    <form id="review-form" class="form-stack" hidden>
+                        <input type="hidden" id="review-approval-id">
+
+                        <div class="detail-grid">
+                            <div>
+                                <span class="detail-label">Employee</span>
+                                <strong id="detail-employee"></strong>
+                            </div>
+                            <div>
+                                <span class="detail-label">Expense ID</span>
+                                <strong id="detail-expense-id"></strong>
+                            </div>
+                            <div>
+                                <span class="detail-label">Amount</span>
+                                <strong id="detail-amount"></strong>
+                            </div>
+                            <div>
+                                <span class="detail-label">Date</span>
+                                <strong id="detail-date"></strong>
+                            </div>
+                        </div>
+
+                        <label>
+                            Description
+                            <textarea id="detail-description" rows="3" readonly></textarea>
+                        </label>
+
+                        <label>
+                            Status
+                            <select id="review-status" required>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="denied">Denied</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Comment
+                            <textarea id="review-comment" rows="4" placeholder="Add review notes"></textarea>
+                        </label>
+
+                        <label>
+                            Review date
+                            <input id="review-date" type="date">
+                        </label>
+
+                        <button type="submit" class="button-primary">Save approval update</button>
+                        <p id="review-message" class="inline-message" aria-live="polite"></p>
+                    </form>
+                </aside>
+            </div>
+        </section>
+
+        <section class="surface">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Report view</p>
+                    <h3>Expense reports</h3>
+                </div>
+                <button id="refresh-reports" class="button-secondary" type="button">Refresh</button>
+            </div>
+
+            <form id="report-filters" class="toolbar-grid reports-toolbar">
+                <label>
+                    Status
+                    <select name="status" id="report-status">
+                        <option value="">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="denied">Denied</option>
+                    </select>
+                </label>
+
+                <label>
+                    Employee
+                    <select name="employee" id="report-employee">
+                        <option value="">All employees</option>
+                    </select>
+                </label>
+
+                <label>
+                    Start date
+                    <input type="date" name="startDate" id="report-start-date">
+                </label>
+
+                <label>
+                    End date
+                    <input type="date" name="endDate" id="report-end-date">
+                </label>
+
+                <label class="toolbar-search">
+                    Search
+                    <input type="search" name="keyword" id="report-keyword" placeholder="Description or employee">
+                </label>
+            </form>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Reviewer</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body"></tbody>
+                </table>
+            </div>
+            <p id="report-empty" class="empty-state" hidden>No reports match these filters.</p>
+        </section>
+    </main>
+
+    <script src="/manager.js" defer></script>
+</body>
+</html>
