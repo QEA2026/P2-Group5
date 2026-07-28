@@ -1,6 +1,8 @@
 package com.revature.DAOs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -89,5 +91,50 @@ public class UserDAOTest {
         verify(preparedStatement).setInt(1, user.getUser_id());
         verify(preparedStatement).executeUpdate();
         assertTrue(deleted);
+    }
+
+    @Test
+    public void getManagersReturnsNullWhenQueryThrowsSqlException() throws SQLException {
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.executeQuery(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        UserDAO userDAO = new UserDAO(connection);
+        ArrayList<User> managers = userDAO.getManagers();
+
+        assertNull(managers);
+    }
+
+    @Test
+    public void insertUserReturnsNullWhenSqlExceptionThrown() throws SQLException {
+        User user = new User("alice", "pw123", "employee");
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        UserDAO userDAO = new UserDAO(connection);
+        User result = userDAO.insertUser(user);
+
+        assertNull(result);
+    }
+
+    @Test
+    public void deleteUserReturnsFalseWhenSqlExceptionThrown() throws SQLException {
+        User user = new User(2, "alice", "pw123", "employee");
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        UserDAO userDAO = new UserDAO(connection);
+        boolean deleted = userDAO.deleteUser(user);
+
+        assertFalse(deleted);
+    }
+
+    @Test
+    public void deleteUserReturnsFalseWhenNoRowsDeleted() throws SQLException {
+        User user = new User(2, "alice", "pw123", "employee");
+        when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
+        when(preparedStatement.executeUpdate()).thenReturn(0);
+
+        UserDAO userDAO = new UserDAO(connection);
+        boolean deleted = userDAO.deleteUser(user);
+
+        assertFalse(deleted);
     }
 }

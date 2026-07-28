@@ -13,6 +13,21 @@ import com.revature.utils.ConnectionUtil;
 
 public class ManagerPortalDAO {
 
+    private final Connection injectedConnection;
+
+    public ManagerPortalDAO() {
+        this.injectedConnection = null;
+    }
+
+    // Allows tests to inject a mock Connection instead of hitting the real database.
+    public ManagerPortalDAO(Connection injectedConnection) {
+        this.injectedConnection = injectedConnection;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return injectedConnection != null ? injectedConnection : ConnectionUtil.getConnection();
+    }
+
     public ArrayList<ManagerExpenseApprovalRecord> getApprovalRecords(
         String status,
         String employee,
@@ -60,7 +75,7 @@ public class ManagerPortalDAO {
             FROM approvals;
             """;
 
-        try (Connection conn = ConnectionUtil.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement statement = conn.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
 
@@ -91,7 +106,7 @@ public class ManagerPortalDAO {
         String sql = "SELECT username FROM users WHERE role = ? ORDER BY username;";
         ArrayList<String> usernames = new ArrayList<>();
 
-        try (Connection conn = ConnectionUtil.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
             statement.setString(1, role);
@@ -175,7 +190,7 @@ public class ManagerPortalDAO {
     private ArrayList<ManagerExpenseApprovalRecord> runRecordQuery(String sql, List<Object> parameters) {
         ArrayList<ManagerExpenseApprovalRecord> records = new ArrayList<>();
 
-        try (Connection conn = ConnectionUtil.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
             bindParameters(statement, parameters);

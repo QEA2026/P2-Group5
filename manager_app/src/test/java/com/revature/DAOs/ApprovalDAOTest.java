@@ -205,4 +205,121 @@ public class ApprovalDAOTest {
 
         assertNull(result);
     }
+
+    @Test
+    public void getApprovalsReturnsNullWhenQueryThrowsSqlException() throws SQLException {
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.executeQuery(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        ArrayList<Approval> approvals = approvalDAO.getApprovals();
+
+        assertNull(approvals);
+    }
+
+    @Test
+    public void getApprovalsByManagerReturnsNullOnGenericSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        ArrayList<Approval> approvals = approvalDAO.getApprovalsByManager("man_username");
+
+        assertNull(approvals);
+    }
+
+    @Test
+    public void getApprovalsByManagerReturnsEmptyListWhenNoDataFoundMessage() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("No data found"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        ArrayList<Approval> approvals = approvalDAO.getApprovalsByManager("man_username");
+
+        assertEquals(0, approvals.size());
+    }
+
+    @Test
+    public void getApprovalsByEmployeeReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        ArrayList<Approval> approvals = approvalDAO.getApprovalsByEmployee("emp_username");
+
+        assertNull(approvals);
+    }
+
+    @Test
+    public void getApprovalsByStatusReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        ArrayList<Approval> approvals = approvalDAO.getApprovalsByStatus("pending");
+
+        assertNull(approvals);
+    }
+
+    @Test
+    public void getApprovalsByDateReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        ArrayList<Approval> approvals = approvalDAO.getApprovalsByDate("2026-07-01");
+
+        assertNull(approvals);
+    }
+
+    @Test
+    public void insertApprovalReturnsNullWhenSqlExceptionThrown() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        Approval approval = new Approval(1, 10, "pending", 5, "needs review", "2026-07-01");
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        Approval result = approvalDAO.insertApproval(approval);
+
+        assertNull(result);
+    }
+
+    @Test
+    public void insertApprovalReturnsNullWhenNoRowsInserted() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
+        when(preparedStatement.executeUpdate()).thenReturn(0);
+
+        Approval approval = new Approval(1, 10, "pending", 5, "needs review", "2026-07-01");
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        Approval result = approvalDAO.insertApproval(approval);
+
+        assertNull(result);
+    }
+
+    @Test
+    public void updateApprovalReturnsNullWhenSqlExceptionThrown() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        Approval approval = new Approval(1, 10, "approved", 5, "looks good", "2026-07-02");
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        Approval result = approvalDAO.updateApproval(approval);
+
+        assertNull(result);
+    }
+
+    @Test
+    public void updateApprovalReturnsNullWhenNoRowsUpdated() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
+        when(preparedStatement.executeUpdate()).thenReturn(0);
+
+        Approval approval = new Approval(1, 10, "approved", 5, "looks good", "2026-07-02");
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        Approval result = approvalDAO.updateApproval(approval);
+
+        assertNull(result);
+    }
+
+    @Test
+    public void getApprovalByIDReturnsNullWhenSqlExceptionThrown() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ApprovalDAO approvalDAO = new ApprovalDAO(connection);
+        Approval result = approvalDAO.getApprovalByID(1);
+
+        assertNull(result);
+    }
 }

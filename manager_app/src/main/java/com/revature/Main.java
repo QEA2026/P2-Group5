@@ -24,11 +24,15 @@ public class Main {
     private static final Set<String> ALLOWED_STATUSES = Set.of("pending", "approved", "denied");
 
     public static void main(String[] args) {
-        AuthDAO authDAO = new AuthDAO();
-        ApprovalDAO approvalDAO = new ApprovalDAO();
-        ManagerPortalDAO portalDAO = new ManagerPortalDAO();
+        Javalin app = createApp(new AuthDAO(), new ApprovalDAO(), new ManagerPortalDAO());
 
-        Javalin app = Javalin.create(config -> {
+        app.start(PORT);
+        System.out.println("Manager web UI running at http://localhost:" + PORT);
+    }
+
+    // Extracted so tests can build the app with injected (mock) DAOs instead of hitting a real database.
+    public static Javalin createApp(AuthDAO authDAO, ApprovalDAO approvalDAO, ManagerPortalDAO portalDAO) {
+        return Javalin.create(config -> {
             config.staticFiles.add(staticFiles -> {
                 staticFiles.hostedPath = "/";
                 staticFiles.directory = "/public";
@@ -149,7 +153,14 @@ public class Main {
                         return;
                     }
 
-                    int approvalId = Integer.parseInt(ctx.pathParam("approvalId"));
+                    int approvalId;
+                    try {
+                        approvalId = Integer.parseInt(ctx.pathParam("approvalId"));
+                    } catch (NumberFormatException exception) {
+                        ctx.status(400).json(Map.of("message", "Approval id must be a number."));
+                        return;
+                    }
+
                     ApprovalUpdateRequest updateRequest = ctx.bodyAsClass(ApprovalUpdateRequest.class);
                     Approval existingApproval = approvalDAO.getApprovalByID(approvalId);
 
@@ -190,9 +201,6 @@ public class Main {
                 ctx.status(500).json(Map.of("message", "Something went wrong on the manager side."));
             });
         });
-
-        app.start(PORT);
-        System.out.println("Manager web UI running at http://localhost:" + PORT);
     }
 
     private static boolean isManagerLoggedIn(io.javalin.http.Context ctx) {

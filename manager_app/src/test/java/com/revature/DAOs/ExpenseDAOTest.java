@@ -162,4 +162,65 @@ public class ExpenseDAOTest {
 
         assertNull(result);
     }
+
+    @Test
+    public void getExpensesReturnsNullWhenQueryThrowsSqlException() throws SQLException {
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.executeQuery(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ExpenseDAO expenseDAO = new ExpenseDAO(connection);
+        ArrayList<Expense> expenses = expenseDAO.getExpenses();
+
+        assertNull(expenses);
+    }
+
+    @Test
+    public void getExpensesByEmployeeReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ExpenseDAO expenseDAO = new ExpenseDAO(connection);
+        ArrayList<Expense> expenses = expenseDAO.getExpensesByEmployee("someUsername");
+
+        assertNull(expenses);
+    }
+
+    @Test
+    public void getExpensesByStatusReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ExpenseDAO expenseDAO = new ExpenseDAO(connection);
+        ArrayList<Expense> expenses = expenseDAO.getExpensesByStatus("approved");
+
+        assertNull(expenses);
+    }
+
+    @Test
+    public void getExpensesByDateReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ExpenseDAO expenseDAO = new ExpenseDAO(connection);
+        ArrayList<Expense> expenses = expenseDAO.getExpensesByDate("2026-07-01", "2026-07-31");
+
+        assertNull(expenses);
+    }
+
+    @Test
+    public void getExpensesByCategoryReturnsNullOnSqlException() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ExpenseDAO expenseDAO = new ExpenseDAO(connection);
+        ArrayList<Expense> expenses = expenseDAO.getExpensesByCategory("Taxi");
+
+        assertNull(expenses);
+    }
+
+    @Test
+    public void getExpenseByIDReturnsNullWhenSqlExceptionThrown() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        ExpenseDAO expenseDAO = new ExpenseDAO(connection);
+        Expense result = expenseDAO.getExpenseByID(1);
+
+        assertNull(result);
+    }
 }

@@ -80,4 +80,14 @@ public class AuthDAOTest {
 
         assertNull(result);
     }
+
+    @Test
+    public void loginReturnsNullWhenSqlExceptionThrown() throws SQLException {
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("simulated database failure"));
+
+        AuthDAO authDAO = new AuthDAO(connection);
+        User result = authDAO.login("jsmith", "password123");
+
+        assertNull(result);
+    }
 }
