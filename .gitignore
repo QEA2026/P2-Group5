@@ -19,6 +19,9 @@ dist/
 # Maven build output
 target/
 
+# Allure commandline distribution, downloaded locally by the allure-maven plugin
+.allure/
+
 # Testing and coverage
 .pytest_cache/
 .coverage
