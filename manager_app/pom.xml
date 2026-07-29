@@ -12,7 +12,21 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <allure.version>2.35.3</allure.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Keeps every Allure adapter/module on the same version. -->
+            <dependency>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-bom</artifactId>
+                <version>${allure.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies><!-- Source: https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
         <!-- SQLite dependency so that we can connect to the database with JDBC -->
@@ -104,6 +118,19 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Allure reporting: captures Cucumber step-level detail and plain JUnit 5
+             (unit/API) test results into a single results directory. -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-cucumber7-jvm</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit-platform</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -113,10 +140,33 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
                 <configuration>
-                    <!-- Mockito's inline mock maker (ByteBuddy) needs this to run on JDK versions
-                         newer than it officially supports yet. -->
-                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                    <!-- ${argLine} is injected by jacoco-maven-plugin's prepare-agent goal
+                         (the -javaagent flag for coverage instrumentation); it must stay in
+                         place alongside the ByteBuddy flag Mockito needs on newer JDKs. -->
+                    <argLine>@{argLine} -Dnet.bytebuddy.experimental=true</argLine>
                 </configuration>
+            </plugin>
+            <!-- Code coverage (line + branch) for unit/API test runs.
+                 Report: target/site/jacoco/index.html -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.15</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!-- Adds the API and E2E test directories to Maven's test sources/resources. -->
             <plugin>
@@ -152,6 +202,13 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- Builds/serves the Allure HTML report from target/allure-results
+                 (mvn allure:report or mvn allure:serve) without a separate CLI install. -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.16.1</version>
             </plugin>
         </plugins>
     </build>

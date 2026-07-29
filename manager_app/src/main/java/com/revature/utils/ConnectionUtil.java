@@ -32,10 +32,16 @@ public class ConnectionUtil {
         return DriverManager.getConnection(url);
     }
 
-    private static Path resolveDatabasePath() {
+    // How many parent directories to check above the working directory before giving up.
+    // Bounds the search to the project tree so it can't wander into unrelated ancestor
+    // directories (e.g. a coincidental /var/db on macOS) when no project "db" folder is nearby.
+    private static final int MAX_ANCESTOR_LOOKUPS = 4;
+
+    static Path resolveDatabasePath() {
         Path currentDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
 
-        for (Path cursor = currentDirectory; cursor != null; cursor = cursor.getParent()) {
+        Path cursor = currentDirectory;
+        for (int hopsUp = 0; cursor != null && hopsUp <= MAX_ANCESTOR_LOOKUPS; hopsUp++, cursor = cursor.getParent()) {
             Path databaseDirectory = cursor.resolve("db");
             Path databaseFile = databaseDirectory.resolve("expense_manager.db");
 
