@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,7 +105,6 @@ class ManagerPlainSeleniumE2ETest {
             null,
             null
         );
-        portalDAO.approvalKeyword = keyword;
         portalDAO.approvalRecords = records(matchingApproval);
 
         loginAsManager();
@@ -240,6 +238,159 @@ class ManagerPlainSeleniumE2ETest {
         assertStatusFilter("denied", "denied-filter-record");
     }
 
+    @Test
+    void blocksUnauthorizedAccessToApprovalAndReportDashboard() {
+        driver.get(baseUrl + "/dashboard");
+
+        wait.until(ExpectedConditions.urlContains("/login"));
+
+        assertTrue(driver.getCurrentUrl().contains("/login"));
+        assertTrue(
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("login-form")))
+                .isDisplayed()
+        );
+    }
+
+    @Test
+    void logoutInvalidatesManagerSession() {
+        loginAsManager();
+
+        scrollAndClick(driver.findElement(By.id("logout-button")));
+        wait.until(ExpectedConditions.urlContains("/login"));
+
+        driver.get(baseUrl + "/dashboard");
+
+        wait.until(ExpectedConditions.urlContains("/login"));
+        assertTrue(
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("login-form")))
+                .isDisplayed()
+        );
+    }
+
+    @Test
+    void approvalUpdatePersistsAfterBrowserRefresh() {
+        String description = "persistent-selenium-approval";
+        String comment = "This decision must remain after refresh";
+        portalDAO.approvalRecords = records(
+            record(9501, 8501, description, "pending", null, null)
+        );
+        approvalDAO.existingApproval = new Approval(
+            9501,
+            8501,
+            "pending",
+            0,
+            null,
+            null
+        );
+
+        loginAsManager();
+        scrollAndClick(
+            wait.until(ExpectedConditions.visibilityOfElementLocated(
+                rowContaining("approval-table-body", description)
+            ))
+        );
+
+        new Select(driver.findElement(By.id("review-status"))).selectByValue("denied");
+        type(By.id("review-comment"), comment);
+        scrollAndClick(
+            driver.findElement(By.cssSelector("#review-form button[type='submit']"))
+        );
+
+        wait.until(currentDriver ->
+            approvalDAO.lastUpdatedApproval != null
+                && "denied".equals(approvalDAO.lastUpdatedApproval.getStatus())
+        );
+
+        driver.navigate().refresh();
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+            rowContaining("approval-table-body", description)
+        ));
+        WebElement refreshedStatus = wait.until(
+            ExpectedConditions.visibilityOfElementLocated(By.id("review-status"))
+        );
+        WebElement refreshedComment = driver.findElement(By.id("review-comment"));
+
+        assertEquals("denied", new Select(refreshedStatus).getFirstSelectedOption().getAttribute("value"));
+        assertEquals(comment, refreshedComment.getAttribute("value"));
+    }
+
+    @Test
+    void filtersReportsByEmployeeAndStatus() {
+        portalDAO.reportRecords = new ArrayList<>(List.of(
+            recordForEmployee(
+                9601,
+                8601,
+                "report_alice",
+                "alice-pending-report",
+                "pending",
+                null,
+                null
+            ),
+            recordForEmployee(
+                9602,
+                8602,
+                "report_alice",
+                "alice-approved-report",
+                "approved",
+                "manager_diana",
+                "Approved Alice report"
+            ),
+            recordForEmployee(
+                9603,
+                8603,
+                "report_bob",
+                "bob-approved-report",
+                "approved",
+                "manager_diana",
+                "Approved Bob report"
+            )
+        ));
+
+        loginAsManager();
+
+        new Select(driver.findElement(By.id("report-status"))).selectByValue("approved");
+        new Select(driver.findElement(By.id("report-employee"))).selectByValue("report_alice");
+
+        wait.until(currentDriver -> {
+            List<WebElement> rows = currentDriver.findElements(
+                By.cssSelector("#report-table-body tr")
+            );
+            if (rows.size() != 1) {
+                return false;
+            }
+
+            List<WebElement> cells = rows.get(0).findElements(By.tagName("td"));
+            return "report_alice".equals(cells.get(0).getText().trim())
+                && "alice-approved-report".equals(cells.get(1).getText().trim())
+                && "Approved".equals(cells.get(4).getText().trim());
+        });
+    }
+
+    @Test
+    void displaysEmptyStateWhenApprovalSearchHasNoMatches() {
+        portalDAO.approvalRecords = records(
+            record(
+                9701,
+                8701,
+                "visible-approval-record",
+                "pending",
+                null,
+                null
+            )
+        );
+
+        loginAsManager();
+        type(By.id("approval-keyword"), "expense-that-does-not-exist");
+
+        WebElement emptyState = wait.until(
+            ExpectedConditions.visibilityOfElementLocated(By.id("approval-empty"))
+        );
+
+        assertEquals("No approvals match these filters.", emptyState.getText().trim());
+        assertTrue(driver.findElements(By.cssSelector("#approval-table-body tr")).isEmpty());
+    }
+
     private void loginAsManager() {
         driver.get(baseUrl + "/login");
         type(By.id("username"), "manager_diana");
@@ -304,12 +455,32 @@ class ManagerPlainSeleniumE2ETest {
         String reviewerUsername,
         String comment
     ) {
+        return recordForEmployee(
+            approvalId,
+            expenseId,
+            "selenium_employee",
+            description,
+            status,
+            reviewerUsername,
+            comment
+        );
+    }
+
+    private static ManagerExpenseApprovalRecord recordForEmployee(
+        int approvalId,
+        int expenseId,
+        String employeeUsername,
+        String description,
+        String status,
+        String reviewerUsername,
+        String comment
+    ) {
         Integer reviewerId = reviewerUsername == null ? null : MANAGER.getUser_id();
         return new ManagerExpenseApprovalRecord(
             approvalId,
             expenseId,
             7001,
-            "selenium_employee",
+            employeeUsername,
             125.75,
             description,
             "2026-07-29",
@@ -366,7 +537,6 @@ class ManagerPlainSeleniumE2ETest {
 
     private static final class TestManagerPortalDAO extends ManagerPortalDAO {
 
-        private String approvalKeyword;
         private ArrayList<ManagerExpenseApprovalRecord> approvalRecords =
             new ArrayList<>();
         private ArrayList<ManagerExpenseApprovalRecord> reportRecords =
@@ -379,13 +549,12 @@ class ManagerPlainSeleniumE2ETest {
             String reviewer,
             String keyword
         ) {
-            if (!Objects.equals(approvalKeyword, keyword)) {
-                return new ArrayList<>();
-            }
-
             ArrayList<ManagerExpenseApprovalRecord> filteredRecords = new ArrayList<>();
             for (ManagerExpenseApprovalRecord record : approvalRecords) {
-                if (status == null || status.equalsIgnoreCase(record.getStatus())) {
+                if (matchesStatus(record, status)
+                    && matchesEmployee(record, employee)
+                    && matchesReviewer(record, reviewer)
+                    && matchesKeyword(record, keyword)) {
                     filteredRecords.add(record);
                 }
             }
@@ -400,7 +569,15 @@ class ManagerPlainSeleniumE2ETest {
             String endDate,
             String keyword
         ) {
-            return new ArrayList<>(reportRecords);
+            ArrayList<ManagerExpenseApprovalRecord> filteredRecords = new ArrayList<>();
+            for (ManagerExpenseApprovalRecord record : reportRecords) {
+                if (matchesStatus(record, status)
+                    && matchesEmployee(record, employee)
+                    && matchesKeyword(record, keyword)) {
+                    filteredRecords.add(record);
+                }
+            }
+            return filteredRecords;
         }
 
         @Override
@@ -410,12 +587,62 @@ class ManagerPlainSeleniumE2ETest {
 
         @Override
         public ArrayList<String> getEmployees() {
-            return new ArrayList<>();
+            ArrayList<String> employees = new ArrayList<>();
+            addEmployees(employees, approvalRecords);
+            addEmployees(employees, reportRecords);
+            return employees;
         }
 
         @Override
         public ArrayList<String> getManagers() {
-            return new ArrayList<>();
+            return new ArrayList<>(List.of(MANAGER.getUsername()));
+        }
+
+        private static boolean matchesStatus(
+            ManagerExpenseApprovalRecord record,
+            String status
+        ) {
+            return status == null || status.equalsIgnoreCase(record.getStatus());
+        }
+
+        private static boolean matchesEmployee(
+            ManagerExpenseApprovalRecord record,
+            String employee
+        ) {
+            return employee == null
+                || employee.equalsIgnoreCase(record.getEmployeeUsername());
+        }
+
+        private static boolean matchesReviewer(
+            ManagerExpenseApprovalRecord record,
+            String reviewer
+        ) {
+            return reviewer == null
+                || reviewer.equalsIgnoreCase(record.getReviewerUsername());
+        }
+
+        private static boolean matchesKeyword(
+            ManagerExpenseApprovalRecord record,
+            String keyword
+        ) {
+            if (keyword == null) {
+                return true;
+            }
+
+            String normalizedKeyword = keyword.toLowerCase();
+            return record.getDescription().toLowerCase().contains(normalizedKeyword)
+                || record.getEmployeeUsername().toLowerCase().contains(normalizedKeyword);
+        }
+
+        private static void addEmployees(
+            ArrayList<String> employees,
+            ArrayList<ManagerExpenseApprovalRecord> records
+        ) {
+            for (ManagerExpenseApprovalRecord record : records) {
+                if (!employees.contains(record.getEmployeeUsername())) {
+                    employees.add(record.getEmployeeUsername());
+                }
+            }
         }
 
         private void applyApprovalUpdate(Approval approval) {
