@@ -4,12 +4,12 @@ import sys
 import tempfile
 import unittest
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from employee_app.app import app
-from employee_app import database
+from app import app
+import database
 
 
 class TestExpenseManagerDatabase(unittest.TestCase):

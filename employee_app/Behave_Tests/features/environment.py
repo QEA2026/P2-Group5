@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 import threading
 import time
@@ -7,11 +8,12 @@ from pathlib import Path
 
 from werkzeug.serving import make_server
 
-APP_ROOT = Path(r"C:\Users\Audrey\team1_p0\P0")
+APP_ROOT = Path(__file__).resolve().parents[2]
 if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
 
-from employee_app import app as employee_app_module
+from app import app as employee_app_module
+import database as app_database
 
 
 class FlaskServer:
@@ -42,9 +44,26 @@ class FlaskServer:
 server = None
 
 
+def initialize_database():
+    db_path = Path(app_database.DB_PATH)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    schema_path = db_path.parent / "schema.sql"
+    seed_path = db_path.parent / "seed.sql"
+
+    if db_path.exists():
+        db_path.unlink()
+
+    with sqlite3.connect(db_path) as conn:
+        conn.executescript(schema_path.read_text(encoding="utf-8"))
+        conn.executescript(seed_path.read_text(encoding="utf-8"))
+        conn.commit()
+
+
 def before_all(context):
     global server
-    server = FlaskServer(employee_app_module.app)
+    initialize_database()
+    server = FlaskServer(employee_app_module)
     server.start()
 
 

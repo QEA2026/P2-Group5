@@ -15,7 +15,7 @@ DATABASE = r"C:\Users\Audrey\team1_p0\P0\db\expense_manager.db"
 def step_application_running(context):
     options = Options()
     options.add_argument("--start-maximized")
-    options.add_argument("--headless=new")
+    # options.add_argument("--headless=new")
 
     context.driver = webdriver.Chrome(options=options)
     context.wait = WebDriverWait(context.driver, 10)

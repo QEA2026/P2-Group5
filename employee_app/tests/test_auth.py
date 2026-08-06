@@ -3,12 +3,12 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from employee_app.app import app
-from employee_app.user_model import User
+from app import app
+from user_model import User
 
 
 class AuthTests(unittest.TestCase):
@@ -20,7 +20,7 @@ class AuthTests(unittest.TestCase):
         mock_user = User(user_id=1, username="bob_employee", password="password123", role="employee")
         mocked_login = MagicMock(return_value=mock_user)
 
-        with patch("employee_app.app.database.login", mocked_login):
+        with patch("app.database.login", mocked_login):
             response = self.client.post(
                 "/login",
                 data={"username": "bob_employee", "password": "password123"},
@@ -38,7 +38,7 @@ class AuthTests(unittest.TestCase):
     def test_login_wrong_username_and_password(self):
         mocked_login = MagicMock(return_value=None)
 
-        with patch("employee_app.app.database.login", mocked_login):
+        with patch("app.database.login", mocked_login):
             response = self.client.post(
                 "/login",
                 data={"username": "wronguser", "password": "wrongpass"},
@@ -55,7 +55,7 @@ class AuthTests(unittest.TestCase):
     def test_login_manager_attempt(self):
         mocked_login = MagicMock(return_value=None)
 
-        with patch("employee_app.app.database.login", mocked_login):
+        with patch("app.database.login", mocked_login):
             response = self.client.post(
                 "/login",
                 data={"username": "manager_eve", "password": "manager123"},

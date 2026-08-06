@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "employee_app"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["employee_app*"]
+exclude = ["employee_app/employee_app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["employee_app/tests", "employee_app/Behave_Tests"]
