@@ -2,31 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Employee Expenses{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <header>
-        <h1>Employee Expenses</h1>
-        {% if session.get('user_id') %}
-        <nav>
-            <span>{{ session.get('username') }}</span>
-            <a href="{{ url_for('logout') }}">Log out</a>
-        </nav>
-        {% endif %}
+<body class="{% block body_class %}employee-dashboard-page{% endblock %}">
+    {% if session.get('user_id') %}
+    <header class="topbar">
+        <div class="brand-lockup">
+            <p class="eyebrow">Revature Expense Manager</p>
+            <h1>Employee dashboard</h1>
+        </div>
+
+        <div class="topbar-actions">
+            <div class="session-copy">
+                <span class="session-label">Signed in as</span>
+                <strong>{{ session.get('username') }}</strong>
+            </div>
+            <a class="button-secondary" href="{{ url_for('logout') }}">Log out</a>
+        </div>
     </header>
+    {% endif %}
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <ul class="flashes">
-            {% for message in messages %}
-            <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
+        <div class="flash-region" role="status" aria-live="polite">
+            <ul class="flashes">
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
         {% endif %}
     {% endwith %}
 
-    <main>
+    <main class="{% block main_class %}workspace{% endblock %}">
         {% block content %}{% endblock %}
     </main>
 </body>
