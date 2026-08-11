@@ -9,3 +9,11 @@ services:
     volumes:
       - ./db:/app/db
     restart: unless-stopped
+  employee-app:
+    build:
+      context: ./employee_app
+    container_name: employee-app
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./db:/db
