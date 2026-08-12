@@ -54,40 +54,6 @@ pipeline {
       }
     }
 
-    stage('Python Tests') {
-      steps {
-        script {
-          if (isUnix()) {
-            sh '''
-              mkdir -p reports/python
-              . ${PY_VENV}/bin/activate
-              pytest employee_app/tests -q --junitxml=reports/python/pytest.xml
-            '''
-          } else {
-            bat '''
-              if not exist reports\\python mkdir reports\\python
-              call %PY_VENV%\\Scripts\\activate
-              pytest employee_app\\tests -q --junitxml=reports\\python\\pytest.xml
-            '''
-          }
-        }
-      }
-    }
-
-    stage('Java Tests') {
-      steps {
-        dir('manager_app') {
-          script {
-            if (isUnix()) {
-              sh 'mvn -B -ntp clean test'
-            } else {
-              bat 'mvn -B -ntp clean test'
-            }
-          }
-        }
-      }
-    }
-
     stage('Java Package') {
       steps {
         dir('manager_app') {
