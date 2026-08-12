@@ -36,18 +36,18 @@ pipeline {
               python3 -m venv ${PY_VENV}
               . ${PY_VENV}/bin/activate
               python -m pip install --upgrade pip
-              pip install -r [requirements.txt](http://_vscodecontentref_/0)
-              pip install -r [requirements.txt](http://_vscodecontentref_/1)
-              pip install pytest
+              python -m pip install -r employee_app/requirements.txt
+              python -m pip install -r employee_app/Behave_Tests/requirements.txt
+              python -m pip install pytest
             '''
           } else {
             bat '''
               py -m venv %PY_VENV%
               call %PY_VENV%\\Scripts\\activate
               python -m pip install --upgrade pip
-              pip install -r [requirements.txt](http://_vscodecontentref_/2)
-              pip install -r [requirements.txt](http://_vscodecontentref_/3)
-              pip install pytest
+              python -m pip install -r employee_app\\requirements.txt
+              python -m pip install -r employee_app\\Behave_Tests\\requirements.txt
+              python -m pip install pytest
             '''
           }
         }
