@@ -8,6 +8,7 @@ pipeline {
 
   environment {
     PY_VENV = ".venv"
+    REPO_URL = 'https://github.com/QEA2026/P2-Group5.git'
   }
 
   triggers {
@@ -18,7 +19,17 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        checkout scm
+        script {
+          def branchName = env.BRANCH_NAME ?: 'main'
+          checkout([
+            $class: 'GitSCM',
+            branches: [[name: "*/${branchName}"]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[url: env.REPO_URL]]
+          ])
+        }
       }
     }
 
