@@ -11,11 +11,6 @@ pipeline {
     REPO_URL = 'https://github.com/QEA2026/P2-Group5.git'
   }
 
-  triggers {
-    // Optional: poll SCM every 5 min if you are not using webhooks
-    // pollSCM('H/5 * * * *')
-  }
-
   stages {
     stage('Checkout') {
       steps {
