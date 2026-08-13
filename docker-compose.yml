@@ -9,3 +9,14 @@ services:
     volumes:
       - ./db:/app/db
     restart: unless-stopped
+
+  employee-app:
+    build:
+      context: ./employee_app
+      dockerfile: Dockerfile
+    container_name: employee-app
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./db:/db
+    restart: unless-stopped
