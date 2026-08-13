@@ -63,12 +63,13 @@ pipeline {
             sh '''
               mkdir -p reports/python
               . ${PY_VENV}/bin/activate
-              pytest employee_app/tests -q --junitxml=reports/python/pytest.xml
+              PYTHONPATH=employee_app${PYTHONPATH:+:${PYTHONPATH}} pytest employee_app/tests -q --junitxml=reports/python/pytest.xml
             '''
           } else {
             bat '''
               if not exist reports\\python mkdir reports\\python
               call %PY_VENV%\\Scripts\\activate
+              set "PYTHONPATH=employee_app;%PYTHONPATH%"
               pytest employee_app\\tests -q --junitxml=reports\\python\\pytest.xml
             '''
           }
