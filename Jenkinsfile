@@ -1,3 +1,11 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
   environment {
     PY_VENV = ".venv"
     REPO_URL = 'https://github.com/QEA2026/P2-Group5.git'
@@ -6,7 +14,6 @@
   }
 
   stages {
-@@ -54,6 +56,92 @@ pipeline {
       }
     }
 
@@ -99,3 +106,38 @@
     stage('Java Package') {
       steps {
         dir('manager_app') {
+          script {
+            if (isUnix()) {
+              sh 'mvn -B -ntp -DskipTests package'
+            } else {
+              bat 'mvn -B -ntp -DskipTests package'
+            }
+          }
+        }
+      }
+    }
+
+    stage('Docker Build (main only)') {
+      when {
+        branch 'main'
+      }
+      steps {
+        script {
+          if (isUnix()) {
+            sh 'docker build -f manager_app/Dockerfile -t revature-expense-manager:${BUILD_NUMBER} .'
+          } else {
+            bat 'docker build -f manager_app\\Dockerfile -t revature-expense-manager:%BUILD_NUMBER% .'
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      junit allowEmptyResults: true, testResults: 'reports/python/pytest.xml'
+      junit allowEmptyResults: true, testResults: 'manager_app/target/surefire-reports/*.xml'
+      archiveArtifacts allowEmptyArchive: true, artifacts: 'manager_app/target/**/*.jar, manager_app/target/site/jacoco/**'
+    }
+  }
+}
