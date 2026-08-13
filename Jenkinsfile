@@ -76,6 +76,24 @@ pipeline {
       }
     }
 
+    stage('Docker Build') {
+      steps {
+        script {
+          if (isUnix()) {
+            sh '''
+              docker build -f employee_app/Dockerfile -t revature-expense-employee:${BUILD_NUMBER} employee_app
+              docker build -f manager_app/Dockerfile -t revature-expense-manager:${BUILD_NUMBER} .
+            '''
+          } else {
+            bat '''
+              docker build -f employee_app\\Dockerfile -t revature-expense-employee:%BUILD_NUMBER% employee_app
+              docker build -f manager_app\\Dockerfile -t revature-expense-manager:%BUILD_NUMBER% .
+            '''
+          }
+        }
+      }
+    }
+
     stage('Java Tests') {
       steps {
         dir('manager_app') {
@@ -85,10 +103,8 @@ pipeline {
                 set -e
                 mkdir -p ../reports/java
 
-                if ! pgrep -f "employee_app/app.py" >/dev/null; then
-                  . ../${PY_VENV}/bin/activate
-                  nohup python ../employee_app/app.py > ../reports/python/employee_app.log 2>&1 &
-                fi
+                docker rm -f employee-app manager-app >/dev/null 2>&1 || true
+                docker run -d --name employee-app -p 5000:5000 -v "$(pwd)/../db:/db" revature-expense-employee:${BUILD_NUMBER}
 
                 for i in $(seq 1 30); do
                   if curl -fsS ${EMPLOYEE_BASE_URL}/login >/dev/null; then
@@ -101,11 +117,7 @@ pipeline {
                   exit 1
                 }
 
-                mvn -B -ntp -DskipTests package
-
-                if ! pgrep -f "com.revature.Main" >/dev/null; then
-                  nohup java -cp target/classes:target/dependency/* com.revature.Main > ../reports/java/manager_app.log 2>&1 &
-                fi
+                docker run -d --name manager-app -p 8080:8080 -v "$(pwd)/../db:/app/db" revature-expense-manager:${BUILD_NUMBER}
 
                 for i in $(seq 1 30); do
                   if curl -fsS ${MANAGER_BASE_URL}/login >/dev/null; then
@@ -124,13 +136,12 @@ pipeline {
               bat '''
                 if not exist ..\\reports\\java mkdir ..\\reports\\java
 
-                powershell -Command "$p = Get-CimInstance Win32_Process -Filter \"Name = 'python.exe'\"; if (-not ($p | Where-Object { $_.CommandLine -match 'employee_app\\app.py' })) { Start-Process python -ArgumentList 'employee_app\\app.py' -WorkingDirectory '..' -RedirectStandardOutput '..\\reports\\python\\employee_app.log' -RedirectStandardError '..\\reports\\python\\employee_app.log' }"
+                docker rm -f employee-app manager-app 2>$null
+                docker run -d --name employee-app -p 5000:5000 -v "%CD%\\..\\db:/db" revature-expense-employee:%BUILD_NUMBER%
 
                 powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri http://127.0.0.1:5000/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Employee app failed to start on http://127.0.0.1:5000' }"
 
-                mvn -B -ntp -DskipTests package
-
-                powershell -Command "$p = Get-CimInstance Win32_Process -Filter \"Name = 'java.exe'\"; if (-not ($p | Where-Object { $_.CommandLine -match 'com.revature.Main' })) { Start-Process java -ArgumentList '-cp', 'target/classes;target/dependency/*', 'com.revature.Main' -WorkingDirectory '.' -RedirectStandardOutput '..\\reports\\java\\manager_app.log' -RedirectStandardError '..\\reports\\java\\manager_app.log' }"
+                docker run -d --name manager-app -p 8080:8080 -v "%CD%\\..\\db:/app/db" revature-expense-manager:%BUILD_NUMBER%
 
                 powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri http://127.0.0.1:8080/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Manager app failed to start on http://127.0.0.1:8080' }"
 
@@ -142,38 +153,17 @@ pipeline {
       }
     }
 
-    stage('Java Package') {
-      steps {
-        dir('manager_app') {
-          script {
-            if (isUnix()) {
-              sh 'mvn -B -ntp -DskipTests package'
-            } else {
-              bat 'mvn -B -ntp -DskipTests package'
-            }
-          }
-        }
-      }
-    }
-
-    stage('Docker Build (main only)') {
-      when {
-        branch 'main'
-      }
-      steps {
-        script {
-          if (isUnix()) {
-            sh 'docker build -f manager_app/Dockerfile -t revature-expense-manager:${BUILD_NUMBER} .'
-          } else {
-            bat 'docker build -f manager_app\\Dockerfile -t revature-expense-manager:%BUILD_NUMBER% .'
-          }
-        }
-      }
-    }
   }
 
   post {
     always {
+      script {
+        if (isUnix()) {
+          sh 'docker rm -f employee-app manager-app >/dev/null 2>&1 || true'
+        } else {
+          bat 'docker rm -f employee-app manager-app 2>nul || exit /b 0'
+        }
+      }
       junit allowEmptyResults: true, testResults: 'reports/python/pytest.xml'
       junit allowEmptyResults: true, testResults: 'manager_app/target/surefire-reports/*.xml'
       archiveArtifacts allowEmptyArchive: true, artifacts: 'manager_app/target/**/*.jar, manager_app/target/site/jacoco/**'
