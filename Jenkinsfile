@@ -14,6 +14,45 @@ pipeline {
   }
 
   stages {
+    stage('Checkout') {
+      steps {
+        script {
+          def branchName = env.BRANCH_NAME ?: 'main'
+          checkout([
+            $class: 'GitSCM',
+            branches: [[name: "*/${branchName}"]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[url: env.REPO_URL]]
+          ])
+        }
+      }
+    }
+
+    stage('Python Setup') {
+      steps {
+        script {
+          if (isUnix()) {
+            sh '''
+              python3 -m venv ${PY_VENV}
+              . ${PY_VENV}/bin/activate
+              python -m pip install --upgrade pip
+              python -m pip install -r employee_app/requirements.txt
+              python -m pip install -r employee_app/Behave_Tests/requirements.txt
+              python -m pip install pytest
+            '''
+          } else {
+            bat '''
+              py -m venv %PY_VENV%
+              call %PY_VENV%\\Scripts\\activate
+              python -m pip install --upgrade pip
+              python -m pip install -r employee_app\\requirements.txt
+              python -m pip install -r employee_app\\Behave_Tests\\requirements.txt
+              python -m pip install pytest
+            '''
+          }
+        }
       }
     }
 
