@@ -103,50 +103,58 @@ pipeline {
               sh '''
                 set -e
                 mkdir -p ../reports/java
+                        EMPLOYEE_PORT=$((5000 + BUILD_NUMBER))
+                        MANAGER_PORT=$((8080 + BUILD_NUMBER))
+                        EMPLOYEE_URL="http://127.0.0.1:${EMPLOYEE_PORT}"
+                        MANAGER_URL="http://127.0.0.1:${MANAGER_PORT}"
 
                 docker rm -f employee-app manager-app >/dev/null 2>&1 || true
-                docker run -d --name employee-app -p 5000:5000 -v "$(pwd)/../db:/db" revature-expense-employee:${BUILD_NUMBER}
+                        docker run -d --name employee-app -p ${EMPLOYEE_PORT}:5000 -v "$(pwd)/../db:/db" revature-expense-employee:${BUILD_NUMBER}
 
                 for i in $(seq 1 30); do
-                  if curl -fsS ${EMPLOYEE_BASE_URL}/login >/dev/null; then
+                          if curl -fsS ${EMPLOYEE_URL}/login >/dev/null; then
                     break
                   fi
                   sleep 1
                 done
-                curl -fsS ${EMPLOYEE_BASE_URL}/login >/dev/null || {
-                  echo "Employee app failed to start on ${EMPLOYEE_BASE_URL}" >&2
+                curl -fsS ${EMPLOYEE_URL}/login >/dev/null || {
+                  echo "Employee app failed to start on ${EMPLOYEE_URL}" >&2
                   exit 1
                 }
 
-                docker run -d --name manager-app -p 8080:8080 -v "$(pwd)/../db:/app/db" revature-expense-manager:${BUILD_NUMBER}
+                docker run -d --name manager-app -p ${MANAGER_PORT}:8080 -v "$(pwd)/../db:/app/db" revature-expense-manager:${BUILD_NUMBER}
 
                 for i in $(seq 1 30); do
-                  if curl -fsS ${MANAGER_BASE_URL}/login >/dev/null; then
+                  if curl -fsS ${MANAGER_URL}/login >/dev/null; then
                     break
                   fi
                   sleep 1
                 done
-                curl -fsS ${MANAGER_BASE_URL}/login >/dev/null || {
-                  echo "Manager app failed to start on ${MANAGER_BASE_URL}" >&2
+                curl -fsS ${MANAGER_URL}/login >/dev/null || {
+                  echo "Manager app failed to start on ${MANAGER_URL}" >&2
                   exit 1
                 }
 
-                mvn -B -ntp -Demployee.baseUrl=${EMPLOYEE_BASE_URL} -Dmanager.baseUrl=${MANAGER_BASE_URL} clean test
+                        mvn -B -ntp -Demployee.baseUrl=${EMPLOYEE_URL} -Dmanager.baseUrl=${MANAGER_URL} clean test
               '''
             } else {
               bat '''
                 if not exist ..\\reports\\java mkdir ..\\reports\\java
+                        set /a EMPLOYEE_PORT=5000+%BUILD_NUMBER%
+                        set /a MANAGER_PORT=8080+%BUILD_NUMBER%
+                        set "EMPLOYEE_URL=http://127.0.0.1:%EMPLOYEE_PORT%"
+                        set "MANAGER_URL=http://127.0.0.1:%MANAGER_PORT%"
 
                 docker rm -f employee-app manager-app 2>$null
-                docker run -d --name employee-app -p 5000:5000 -v "%CD%\\..\\db:/db" revature-expense-employee:%BUILD_NUMBER%
+                        docker run -d --name employee-app -p %EMPLOYEE_PORT%:5000 -v "%CD%\..\db:/db" revature-expense-employee:%BUILD_NUMBER%
 
-                powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri http://127.0.0.1:5000/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Employee app failed to start on http://127.0.0.1:5000' }"
+                        powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri %EMPLOYEE_URL%/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Employee app failed to start on %EMPLOYEE_URL%' }"
 
-                docker run -d --name manager-app -p 8080:8080 -v "%CD%\\..\\db:/app/db" revature-expense-manager:%BUILD_NUMBER%
+                        docker run -d --name manager-app -p %MANAGER_PORT%:8080 -v "%CD%\..\db:/app/db" revature-expense-manager:%BUILD_NUMBER%
 
-                powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri http://127.0.0.1:8080/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Manager app failed to start on http://127.0.0.1:8080' }"
+                        powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri %MANAGER_URL%/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Manager app failed to start on %MANAGER_URL%' }"
 
-                mvn -B -ntp -Demployee.baseUrl=http://127.0.0.1:5000 -Dmanager.baseUrl=http://127.0.0.1:8080 clean test
+                        mvn -B -ntp -Demployee.baseUrl=%EMPLOYEE_URL% -Dmanager.baseUrl=%MANAGER_URL% clean test
               '''
             }
           }
