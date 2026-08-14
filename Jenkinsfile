@@ -146,11 +146,11 @@ pipeline {
                         set "MANAGER_URL=http://127.0.0.1:%MANAGER_PORT%"
 
                 docker rm -f employee-app manager-app 2>$null
-                        docker run -d --name employee-app -p %EMPLOYEE_PORT%:5000 -v "%CD%\..\db:/db" revature-expense-employee:%BUILD_NUMBER%
+                        docker run -d --name employee-app -p %EMPLOYEE_PORT%:5000 -v "%CD%\\..\\db:/db" revature-expense-employee:%BUILD_NUMBER%
 
                         powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri %EMPLOYEE_URL%/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Employee app failed to start on %EMPLOYEE_URL%' }"
 
-                        docker run -d --name manager-app -p %MANAGER_PORT%:8080 -v "%CD%\..\db:/app/db" revature-expense-manager:%BUILD_NUMBER%
+                        docker run -d --name manager-app -p %MANAGER_PORT%:8080 -v "%CD%\\..\\db:/app/db" revature-expense-manager:%BUILD_NUMBER%
 
                         powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri %MANAGER_URL%/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Manager app failed to start on %MANAGER_URL%' }"
 
