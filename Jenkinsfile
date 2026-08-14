@@ -139,7 +139,7 @@ pipeline {
                   exit 1
                 }
 
-                        mvn -B -ntp -Demployee.baseUrl=${EMPLOYEE_URL} -Dmanager.baseUrl=${MANAGER_URL} clean test
+                      timeout 10m mvn -B -ntp -Dselenium.headless=true -Demployee.baseUrl=${EMPLOYEE_URL} -Dmanager.baseUrl=${MANAGER_URL} clean test
               '''
             } else {
               bat '''
@@ -158,7 +158,7 @@ pipeline {
 
                         powershell -Command "$count=0; while($count -lt 30){ try { (Invoke-WebRequest -Uri %MANAGER_URL%/login -UseBasicParsing).StatusCode | Out-Null; break } catch { Start-Sleep -Seconds 1; $count++ } }; if($count -eq 30){ throw 'Manager app failed to start on %MANAGER_URL%' }"
 
-                        mvn -B -ntp -Demployee.baseUrl=%EMPLOYEE_URL% -Dmanager.baseUrl=%MANAGER_URL% clean test
+                      powershell -NoProfile -Command "$job = Start-Job { & mvn -B -ntp -Dselenium.headless=true -Demployee.baseUrl=$env:EMPLOYEE_URL -Dmanager.baseUrl=$env:MANAGER_URL clean test }; if (-not (Wait-Job $job -Timeout 600)) { Stop-Job $job; throw 'Maven tests timed out after 10 minutes' }; Receive-Job $job; if ((Get-Job $job).State -ne 'Completed') { exit 1 }"
               '''
             }
           }
